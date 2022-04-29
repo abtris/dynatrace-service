@@ -113,7 +113,7 @@ func TestUniformClient_GetIntegrationIDByName(t *testing.T) {
 			c := UniformClient{
 				client: tt.uniformClient,
 			}
-			integrationID, err := c.GetIntegrationIDByName(tt.integrationName)
+			integrationID, err := c.GetIntegrationIDByName(context.Background(), tt.integrationName)
 			if tt.expectError {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedErrorSubstring)

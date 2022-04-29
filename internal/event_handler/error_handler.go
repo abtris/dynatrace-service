@@ -66,7 +66,7 @@ func (eh ErrorHandler) sendErroredGetSLIFinishedEvent(ctx context.Context, keptn
 }
 
 func (eh ErrorHandler) sendErrorEvent(ctx context.Context, keptnClient *keptn.Client) error {
-	integrationID, err := eh.uniformClient.GetIntegrationIDByName(adapter.GetEventSource())
+	integrationID, err := eh.uniformClient.GetIntegrationIDByName(ctx, adapter.GetEventSource())
 	if err != nil {
 		log.WithError(err).Error("Could not retrieve integration ID from Keptn Uniform")
 		// no need to continue here, message will not show up in Uniform

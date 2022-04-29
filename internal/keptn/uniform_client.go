@@ -1,6 +1,7 @@
 package keptn
 
 import (
+	"context"
 	"fmt"
 
 	api "github.com/keptn/go-utils/pkg/api/utils"
@@ -9,7 +10,7 @@ import (
 // UniformClientInterface provides access to Keptn Uniform.
 type UniformClientInterface interface {
 	// GetIntegrationIDByName gets the ID of the integration with specified name or returns an error if none or more than one exist with that name.
-	GetIntegrationIDByName(integrationName string) (string, error)
+	GetIntegrationIDByName(ctx context.Context, integrationName string) (string, error)
 }
 
 // UniformClient is an implementation of UniformClientInterface using api.UniformV1Interface.
@@ -25,8 +26,8 @@ func NewUniformClient(client api.UniformV1Interface) *UniformClient {
 }
 
 // GetIntegrationIDByName gets the ID of the integration with specified name or returns an error if none or more than one exist with that name.
-func (c *UniformClient) GetIntegrationIDByName(integrationName string) (string, error) {
-	integrations, err := c.client.GetRegistrations()
+func (c *UniformClient) GetIntegrationIDByName(ctx context.Context, integrationName string) (string, error) {
+	integrations, err := c.client.GetRegistrationsWithContext(ctx)
 	if err != nil {
 		return "", fmt.Errorf("could not get Keptn Uniform registrations: %w", err)
 	}
