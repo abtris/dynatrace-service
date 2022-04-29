@@ -6,7 +6,7 @@ require (
 	github.com/cloudevents/sdk-go/v2 v2.9.0
 	github.com/go-test/deep v1.0.8
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/keptn/go-utils v0.13.0
+	github.com/keptn/go-utils v0.14.1-0.20220426113022-b8b854e481da
 	github.com/keptn/kubernetes-utils v0.13.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
