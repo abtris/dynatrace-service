@@ -1,6 +1,7 @@
 package keptn
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,10 +14,10 @@ import (
 // ServiceClientInterface provides access to Keptn services.
 type ServiceClientInterface interface {
 	// GetServiceNames gets the names of the services in the specified project and stage or returns an error.
-	GetServiceNames(project string, stage string) ([]string, error)
+	GetServiceNames(ctx context.Context, project string, stage string) ([]string, error)
 
 	// CreateServiceInProject creates a service in all stages of the specified project or returns an error.
-	CreateServiceInProject(project string, service string) error
+	CreateServiceInProject(ctx context.Context, project string, service string) error
 }
 
 // ServiceClient is an implementation of ServiceClientInterface using api.ServicesV1Interface and APIClientInterface.
@@ -37,8 +38,8 @@ func NewServiceClient(servicesClient api.ServicesV1Interface, httpClient *http.C
 }
 
 // GetServiceNames gets the names of the services in the specified project and stage or returns an error.
-func (c *ServiceClient) GetServiceNames(project string, stage string) ([]string, error) {
-	services, err := c.servicesClient.GetAllServices(project, stage)
+func (c *ServiceClient) GetServiceNames(ctx context.Context, project string, stage string) ([]string, error) {
+	services, err := c.servicesClient.GetAllServicesWithContext(ctx, project, stage)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch services of Keptn project %s at stage %s: %s", project, stage, err.Error())
 	}
@@ -56,7 +57,7 @@ func (c *ServiceClient) GetServiceNames(project string, stage string) ([]string,
 }
 
 // CreateServiceInProject creates a service in all stages of the specified project or returns an error.
-func (c *ServiceClient) CreateServiceInProject(project string, service string) error {
+func (c *ServiceClient) CreateServiceInProject(ctx context.Context, project string, service string) error {
 	serviceModel := &apimodels.CreateService{
 		ServiceName: &service,
 	}
@@ -65,7 +66,7 @@ func (c *ServiceClient) CreateServiceInProject(project string, service string) e
 		return fmt.Errorf("could not marshal service payload: %s", err.Error())
 	}
 
-	_, err = c.apiClient.Post(getServicePathFor(project), reqBody)
+	_, err = c.apiClient.Post(ctx, getServicePathFor(project), reqBody)
 	return err
 }
 

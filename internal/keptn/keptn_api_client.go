@@ -11,7 +11,7 @@ import (
 // APIClientInterface provides methods for accessing a Keptn API.
 type APIClientInterface interface {
 	// Post performs a post request and returns a validated response or an error.
-	Post(apiPath string, body []byte) ([]byte, error)
+	Post(ctx context.Context, apiPath string, body []byte) ([]byte, error)
 }
 
 // APIClient is an implementation of APIClientInterface using a rest.ClientInterface.
@@ -27,8 +27,8 @@ func NewAPIClient(client rest.ClientInterface) *APIClient {
 }
 
 // Post performs a post request and returns a validated response or an error.
-func (c *APIClient) Post(apiPath string, body []byte) ([]byte, error) {
-	body, status, url, err := c.restClient.Post(context.TODO(), apiPath, body)
+func (c *APIClient) Post(ctx context.Context, apiPath string, body []byte) ([]byte, error) {
+	body, status, url, err := c.restClient.Post(ctx, apiPath, body)
 	if err != nil {
 		return nil, err
 	}

@@ -142,7 +142,7 @@ func (s *ServiceSynchronizer) Run(runCtx context.Context, synchronizationCtx con
 
 // synchronizeServices performs a single synchronization run
 func (s *ServiceSynchronizer) synchronizeServices(ctx context.Context) {
-	existingServices, err := s.getExistingServicesFromKeptn()
+	existingServices, err := s.getExistingServicesFromKeptn(ctx)
 	if err != nil {
 		log.WithError(err).Error("Could not get existing services from Keptn")
 		return
@@ -182,8 +182,8 @@ func (s *ServiceSynchronizer) synchronizeServices(ctx context.Context) {
 	}
 }
 
-func (s *ServiceSynchronizer) getExistingServicesFromKeptn() ([]string, error) {
-	return s.servicesClient.GetServiceNames(synchronizedProject, synchronizedStage)
+func (s *ServiceSynchronizer) getExistingServicesFromKeptn(ctx context.Context) ([]string, error) {
+	return s.servicesClient.GetServiceNames(ctx, synchronizedProject, synchronizedStage)
 }
 
 func (s *ServiceSynchronizer) getKeptnManagedServicesFromDynatrace(ctx context.Context) ([]dynatrace.Entity, error) {
@@ -227,7 +227,7 @@ func doesServiceExist(services []string, serviceName string) bool {
 }
 
 func (s *ServiceSynchronizer) addServiceToKeptn(ctx context.Context, serviceName string) error {
-	err := s.servicesClient.CreateServiceInProject(synchronizedProject, serviceName)
+	err := s.servicesClient.CreateServiceInProject(ctx, synchronizedProject, serviceName)
 	if err != nil {
 		return fmt.Errorf("could not create service %s: %s", serviceName, err)
 	}
