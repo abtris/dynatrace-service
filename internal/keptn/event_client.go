@@ -1,6 +1,7 @@
 package keptn
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -16,13 +17,13 @@ import (
 // EventClientInterface encapsulates functionality built on top of Keptn events.
 type EventClientInterface interface {
 	// IsPartOfRemediation checks whether the sequence includes a remediation triggered event or returns an error.
-	IsPartOfRemediation(event adapter.EventContentAdapter) (bool, error)
+	IsPartOfRemediation(ctx context.Context, event adapter.EventContentAdapter) (bool, error)
 
 	// FindProblemID finds the Problem ID that is associated with the specified Keptn event or returns an error.
-	FindProblemID(keptnEvent adapter.EventContentAdapter) (string, error)
+	FindProblemID(ctx context.Context, keptnEvent adapter.EventContentAdapter) (string, error)
 
 	// GetImageAndTag extracts the image and tag associated with a deployment triggered as part of the sequence.
-	GetImageAndTag(keptnEvent adapter.EventContentAdapter) common.ImageAndTag
+	GetImageAndTag(ctx context.Context, keptnEvent adapter.EventContentAdapter) common.ImageAndTag
 }
 
 // EventClient implements offers EventClientInterface using api.EventsV1Interface.
@@ -38,8 +39,9 @@ func NewEventClient(client api.EventsV1Interface) *EventClient {
 }
 
 // IsPartOfRemediation checks whether the sequence includes a remediation triggered event or returns an error.
-func (c *EventClient) IsPartOfRemediation(event adapter.EventContentAdapter) (bool, error) {
-	events, err := c.client.GetEvents(
+func (c *EventClient) IsPartOfRemediation(ctx context.Context, event adapter.EventContentAdapter) (bool, error) {
+	events, err := c.client.GetEventsWithContext(
+		ctx,
 		&api.EventFilter{
 			Project:      event.GetProject(),
 			Stage:        event.GetStage(),
@@ -61,7 +63,7 @@ func (c *EventClient) IsPartOfRemediation(event adapter.EventContentAdapter) (bo
 
 // FindProblemID finds the Problem ID that is associated with the specified Keptn event or returns an error.
 // It first parses it from Problem URL label and if it cant be found there it will look for the Initial Problem Open Event and gets the ID from there.
-func (c *EventClient) FindProblemID(keptnEvent adapter.EventContentAdapter) (string, error) {
+func (c *EventClient) FindProblemID(ctx context.Context, keptnEvent adapter.EventContentAdapter) (string, error) {
 	// Step 1 - see if we have a Problem Url in the labels
 	problemID := TryGetProblemIDFromLabels(keptnEvent)
 	if problemID != "" {
@@ -69,7 +71,8 @@ func (c *EventClient) FindProblemID(keptnEvent adapter.EventContentAdapter) (str
 	}
 
 	// Step 2 - lets see if we have a ProblemOpenEvent for this KeptnContext - if so - we try to extract the Problem ID
-	events, mErr := c.client.GetEvents(
+	events, mErr := c.client.GetEventsWithContext(
+		ctx,
 		&api.EventFilter{
 			Project:      keptnEvent.GetProject(),
 			EventType:    keptncommon.ProblemOpenEventType,
@@ -98,9 +101,10 @@ func (c *EventClient) FindProblemID(keptnEvent adapter.EventContentAdapter) (str
 }
 
 // GetImageAndTag extracts the image and tag associated with a deployment triggered as part of the sequence.
-func (c *EventClient) GetImageAndTag(event adapter.EventContentAdapter) common.ImageAndTag {
+func (c *EventClient) GetImageAndTag(ctx context.Context, event adapter.EventContentAdapter) common.ImageAndTag {
 
-	events, mErr := c.client.GetEvents(
+	events, mErr := c.client.GetEventsWithContext(
+		ctx,
 		&api.EventFilter{
 			Project:      event.GetProject(),
 			Stage:        event.GetStage(),
