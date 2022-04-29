@@ -1,6 +1,7 @@
 package keptn
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/keptn-contrib/dynatrace-service/internal/credentials"
@@ -10,7 +11,7 @@ import (
 // CredentialsCheckerInterface validates Keptn credentials.
 type CredentialsCheckerInterface interface {
 	// CheckCredentials checks if the provided credentials are valid.
-	CheckCredentials(keptnCredentials credentials.KeptnCredentials) error
+	CheckCredentials(ctx context.Context, keptnCredentials credentials.KeptnCredentials) error
 }
 
 // CredentialsChecker is an implementation of ConnectionCheckerInterface.
@@ -23,13 +24,13 @@ func NewDefaultCredentialsChecker() *CredentialsChecker {
 }
 
 // CheckCredentials checks the provided credentials and returns an error if they are invalid.
-func (c *CredentialsChecker) CheckCredentials(keptnCredentials credentials.KeptnCredentials) error {
+func (c *CredentialsChecker) CheckCredentials(ctx context.Context, keptnCredentials credentials.KeptnCredentials) error {
 	apiSet, err := api.New(keptnCredentials.GetAPIURL(), api.WithAuthToken(keptnCredentials.GetAPIToken()))
 	if err != nil {
 		return fmt.Errorf("error creating Keptn API set: %w", err)
 	}
 
-	_, mErr := apiSet.AuthV1().Authenticate()
+	_, mErr := apiSet.AuthV1().AuthenticateWithContext(ctx)
 	if mErr != nil {
 		return fmt.Errorf("error authenticating Keptn connection: %s", mErr.GetMessage())
 	}

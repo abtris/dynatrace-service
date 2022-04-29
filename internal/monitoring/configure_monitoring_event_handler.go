@@ -83,7 +83,7 @@ func (eh *ConfigureMonitoringEventHandler) checkKeptnCredentials(ctx context.Con
 		}
 	}
 
-	err = eh.credentialsChecker.CheckCredentials(*keptnCredentials)
+	err = eh.credentialsChecker.CheckCredentials(ctx, *keptnCredentials)
 	if err != nil {
 		return keptnCredentialsCheckResult{
 			success: false,
