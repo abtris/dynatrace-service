@@ -1,6 +1,7 @@
 package keptn
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -69,9 +70,9 @@ func (cq *CustomQueries) GetQueryByNameOrDefaultIfEmpty(sliName string) (string,
 }
 
 type ClientInterface interface {
-	GetCustomQueries(project string, stage string, service string) (*CustomQueries, error)
-	GetShipyard() (*keptnv2.Shipyard, error)
-	SendCloudEvent(factory adapter.CloudEventFactoryInterface) error
+	GetCustomQueries(ctx context.Context, project string, stage string, service string) (*CustomQueries, error)
+	GetShipyard(ctx context.Context) (*keptnv2.Shipyard, error)
+	SendCloudEvent(ctx context.Context, factory adapter.CloudEventFactoryInterface) error
 }
 
 type Client struct {
@@ -96,12 +97,12 @@ func NewDefaultClient(event event.Event) (*Client, error) {
 	return NewClient(kClient), nil
 }
 
-func (c *Client) GetCustomQueries(project string, stage string, service string) (*CustomQueries, error) {
+func (c *Client) GetCustomQueries(ctx context.Context, project string, stage string, service string) (*CustomQueries, error) {
 	if c.client == nil {
 		return nil, errors.New("could not retrieve SLI config: no Keptn client initialized")
 	}
 
-	customQueries, err := c.client.GetSLIConfiguration(project, stage, service, sliResourceURI)
+	customQueries, err := c.client.GetSLIConfigurationWithContext(ctx, project, stage, service, sliResourceURI)
 	if err != nil {
 		return nil, err
 	}
@@ -109,8 +110,8 @@ func (c *Client) GetCustomQueries(project string, stage string, service string) 
 	return &CustomQueries{values: customQueries}, nil
 }
 
-func (c *Client) GetShipyard() (*keptnv2.Shipyard, error) {
-	shipyard, err := c.client.GetShipyard()
+func (c *Client) GetShipyard(ctx context.Context) (*keptnv2.Shipyard, error) {
+	shipyard, err := c.client.GetShipyardWithContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve shipyard for project %s: %v", c.client.Event.GetProject(), err)
 	}
@@ -118,13 +119,13 @@ func (c *Client) GetShipyard() (*keptnv2.Shipyard, error) {
 	return shipyard, nil
 }
 
-func (c *Client) SendCloudEvent(factory adapter.CloudEventFactoryInterface) error {
+func (c *Client) SendCloudEvent(ctx context.Context, factory adapter.CloudEventFactoryInterface) error {
 	ev, err := factory.CreateCloudEvent()
 	if err != nil {
 		return fmt.Errorf("could not create cloud event: %s", err)
 	}
 
-	if err := c.client.SendCloudEvent(*ev); err != nil {
+	if err := c.client.SendCloudEventWithContext(ctx, *ev); err != nil {
 		return fmt.Errorf("could not send %s event: %s", ev.Type(), err.Error())
 	}
 

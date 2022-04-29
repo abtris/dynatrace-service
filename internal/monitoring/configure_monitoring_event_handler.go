@@ -57,20 +57,20 @@ func (eh *ConfigureMonitoringEventHandler) configureMonitoring(ctx context.Conte
 	keptnCredentialsCheckResult := eh.checkKeptnCredentials(ctx)
 	log.WithField("result", keptnCredentialsCheckResult).Info("Checked Keptn credentials")
 
-	shipyard, err := eh.kClient.GetShipyard()
+	shipyard, err := eh.kClient.GetShipyard(ctx)
 	if err != nil {
-		return eh.handleError(err)
+		return eh.handleError(ctx, err)
 	}
 
 	cfg := NewConfiguration(eh.dtClient, eh.kClient, eh.sloReader, eh.serviceClient)
 
 	configuredEntities, err := cfg.ConfigureMonitoring(ctx, eh.event.GetProject(), *shipyard)
 	if err != nil {
-		return eh.handleError(err)
+		return eh.handleError(ctx, err)
 	}
 
 	log.Info("Dynatrace Monitoring setup done")
-	return eh.handleSuccess(getConfigureMonitoringResultMessage(keptnCredentialsCheckResult, configuredEntities))
+	return eh.handleSuccess(ctx, getConfigureMonitoringResultMessage(keptnCredentialsCheckResult, configuredEntities))
 }
 
 func (eh *ConfigureMonitoringEventHandler) checkKeptnCredentials(ctx context.Context) keptnCredentialsCheckResult {
@@ -161,17 +161,17 @@ func getConfigureMonitoringResultMessage(keptnCredentialsCheckResult keptnCreden
 	return msg
 }
 
-func (eh *ConfigureMonitoringEventHandler) handleError(err error) error {
+func (eh *ConfigureMonitoringEventHandler) handleError(ctx context.Context, err error) error {
 	log.Error(err)
-	return eh.sendConfigureMonitoringFinishedEvent(NewErroredConfigureMonitoringFinishedEventFactory(eh.event, err))
+	return eh.sendConfigureMonitoringFinishedEvent(ctx, NewErroredConfigureMonitoringFinishedEventFactory(eh.event, err))
 }
 
-func (eh *ConfigureMonitoringEventHandler) handleSuccess(message string) error {
-	return eh.sendConfigureMonitoringFinishedEvent(NewSucceededConfigureMonitoringFinishedEventFactory(eh.event, message))
+func (eh *ConfigureMonitoringEventHandler) handleSuccess(ctx context.Context, message string) error {
+	return eh.sendConfigureMonitoringFinishedEvent(ctx, NewSucceededConfigureMonitoringFinishedEventFactory(eh.event, message))
 }
 
-func (eh *ConfigureMonitoringEventHandler) sendConfigureMonitoringFinishedEvent(factory adapter.CloudEventFactoryInterface) error {
-	if err := eh.kClient.SendCloudEvent(factory); err != nil {
+func (eh *ConfigureMonitoringEventHandler) sendConfigureMonitoringFinishedEvent(ctx context.Context, factory adapter.CloudEventFactoryInterface) error {
+	if err := eh.kClient.SendCloudEvent(ctx, factory); err != nil {
 		log.WithError(err).Error("Failed to send configure monitoring finished event")
 		return err
 	}

@@ -50,7 +50,7 @@ func (eh GetSLIEventHandler) HandleEvent(workCtx context.Context, replyCtx conte
 		return nil
 	}
 
-	if err := eh.sendGetSLIStartedEvent(); err != nil {
+	if err := eh.sendGetSLIStartedEvent(workCtx); err != nil {
 		return err
 	}
 
@@ -64,11 +64,11 @@ func (eh GetSLIEventHandler) HandleEvent(workCtx context.Context, replyCtx conte
 	sliResults, err := eh.retrieveSLIResults(workCtx)
 	if err != nil {
 		log.WithError(err).Error("error retrieving SLIs")
-		return eh.sendGetSLIFinishedEvent(nil, err)
+		return eh.sendGetSLIFinishedEvent(replyCtx, nil, err)
 	}
 
 	log.Info("Finished retrieving SLI results, sending sh.keptn.event.get-sli.finished event now...")
-	return eh.sendGetSLIFinishedEvent(sliResults, err)
+	return eh.sendGetSLIFinishedEvent(replyCtx, sliResults, err)
 }
 
 // retrieveSLIResults will retrieve metrics either from a dashboard or from an SLI file.
@@ -151,7 +151,7 @@ func (eh *GetSLIEventHandler) getSLIResultsFromDynatraceDashboard(ctx context.Co
 
 func (eh *GetSLIEventHandler) getSLIResultsFromCustomQueries(ctx context.Context, timeframe common.Timeframe) ([]result.SLIResult, error) {
 	// get custom metrics for project if they exist
-	projectCustomQueries, err := eh.kClient.GetCustomQueries(eh.event.GetProject(), eh.event.GetStage(), eh.event.GetService())
+	projectCustomQueries, err := eh.kClient.GetCustomQueries(ctx, eh.event.GetProject(), eh.event.GetStage(), eh.event.GetService())
 	if err != nil {
 		log.WithError(err).Errorf("could not retrieve custom queries: %v", err)
 		return nil, fmt.Errorf("could not retrieve custom SLI definitions: %w", err)
@@ -244,16 +244,16 @@ func (eh GetSLIEventHandler) addSLO(ctx context.Context, newSLO *keptncommon.SLO
 	return nil
 }
 
-func (eh *GetSLIEventHandler) sendGetSLIStartedEvent() error {
-	return eh.sendEvent(NewGetSLIStartedEventFactory(eh.event))
+func (eh *GetSLIEventHandler) sendGetSLIStartedEvent(ctx context.Context) error {
+	return eh.sendEvent(ctx, NewGetSLIStartedEventFactory(eh.event))
 }
 
 // sendGetSLIFinishedEvent sends the SLI finished event. If err != nil it will send an error message
-func (eh *GetSLIEventHandler) sendGetSLIFinishedEvent(sliResults []result.SLIResult, err error) error {
+func (eh *GetSLIEventHandler) sendGetSLIFinishedEvent(ctx context.Context, sliResults []result.SLIResult, err error) error {
 	// if an error was set - the SLI results will be set to failed and an error message is set to each
 	sliResults = resetSLIResultsInCaseOfError(err, eh.event, sliResults)
 
-	return eh.sendEvent(NewSucceededGetSLIFinishedEventFactory(eh.event, sliResults, err))
+	return eh.sendEvent(ctx, NewSucceededGetSLIFinishedEventFactory(eh.event, sliResults, err))
 }
 
 func resetSLIResultsInCaseOfError(err error, eventData GetSLITriggeredAdapterInterface, sliResults []result.SLIResult) []result.SLIResult {
@@ -283,8 +283,8 @@ func resetSLIResultsInCaseOfError(err error, eventData GetSLITriggeredAdapterInt
 	return erroredSLIResults
 }
 
-func (eh *GetSLIEventHandler) sendEvent(factory adapter.CloudEventFactoryInterface) error {
-	err := eh.kClient.SendCloudEvent(factory)
+func (eh *GetSLIEventHandler) sendEvent(ctx context.Context, factory adapter.CloudEventFactoryInterface) error {
+	err := eh.kClient.SendCloudEvent(ctx, factory)
 	if err != nil {
 		log.WithError(err).Error("Could not send get sli cloud event")
 		return err

@@ -80,15 +80,15 @@ type keptnClientMock struct {
 	eventSink []*cloudevents.Event
 }
 
-func (m *keptnClientMock) GetCustomQueries(project string, stage string, service string) (*keptn.CustomQueries, error) {
+func (m *keptnClientMock) GetCustomQueries(ctx context.Context, project string, stage string, service string) (*keptn.CustomQueries, error) {
 	panic("GetCustomQueries() should not be needed in this mock!")
 }
 
-func (m *keptnClientMock) GetShipyard() (*keptnv2.Shipyard, error) {
+func (m *keptnClientMock) GetShipyard(ctx context.Context) (*keptnv2.Shipyard, error) {
 	panic("GetShipyard() should not be needed in this mock!")
 }
 
-func (m *keptnClientMock) SendCloudEvent(factory adapter.CloudEventFactoryInterface) error {
+func (m *keptnClientMock) SendCloudEvent(ctx context.Context, factory adapter.CloudEventFactoryInterface) error {
 	// simulate errors while creating cloud event
 	if factory == nil {
 		return fmt.Errorf("missing factory")

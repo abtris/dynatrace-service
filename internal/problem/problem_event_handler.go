@@ -47,17 +47,17 @@ func (eh ProblemEventHandler) HandleEvent(workCtx context.Context, replyCtx cont
 	}
 
 	if eh.event.IsOpen() {
-		return eh.handleOpenedProblemFromDT()
+		return eh.handleOpenedProblemFromDT(replyCtx)
 	}
 	if eh.event.IsResolved() {
-		return eh.handleClosedProblemFromDT()
+		return eh.handleClosedProblemFromDT(replyCtx)
 	}
 
 	return nil
 }
 
-func (eh ProblemEventHandler) handleClosedProblemFromDT() error {
-	err := eh.sendEvent(NewProblemClosedEventFactory(eh.event))
+func (eh ProblemEventHandler) handleClosedProblemFromDT(ctx context.Context) error {
+	err := eh.sendEvent(ctx, NewProblemClosedEventFactory(eh.event))
 	if err != nil {
 		return err
 	}
@@ -66,13 +66,13 @@ func (eh ProblemEventHandler) handleClosedProblemFromDT() error {
 	return nil
 }
 
-func (eh ProblemEventHandler) handleOpenedProblemFromDT() error {
+func (eh ProblemEventHandler) handleOpenedProblemFromDT(ctx context.Context) error {
 	if eh.event.GetStage() == "" {
 		log.Debug("Dropping open problen event as it has no stage")
 		return nil
 	}
 
-	err := eh.sendEvent(NewRemediationTriggeredEventFactory(eh.event))
+	err := eh.sendEvent(ctx, NewRemediationTriggeredEventFactory(eh.event))
 	if err != nil {
 		return err
 	}
@@ -81,8 +81,8 @@ func (eh ProblemEventHandler) handleOpenedProblemFromDT() error {
 	return nil
 }
 
-func (eh ProblemEventHandler) sendEvent(factory adapter.CloudEventFactoryInterface) error {
-	err := eh.client.SendCloudEvent(factory)
+func (eh ProblemEventHandler) sendEvent(ctx context.Context, factory adapter.CloudEventFactoryInterface) error {
+	err := eh.client.SendCloudEvent(ctx, factory)
 	if err != nil {
 		log.WithError(err).Error("Failed to send cloud event")
 	}

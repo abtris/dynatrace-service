@@ -53,7 +53,7 @@ func (mec MetricEventCreation) Create(ctx context.Context, project string, stage
 	}
 	// get custom metrics for project
 
-	projectCustomQueries, err := mec.kClient.GetCustomQueries(project, stage, service)
+	projectCustomQueries, err := mec.kClient.GetCustomQueries(ctx, project, stage, service)
 	if err != nil {
 		log.WithError(err).WithField("project", project).Error("Failed to get custom queries for project")
 		return nil
