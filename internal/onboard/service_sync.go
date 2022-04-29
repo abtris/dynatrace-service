@@ -80,7 +80,7 @@ func newDefaultEntitiesClientFactory(resourceClient keptn.DynatraceConfigReaderI
 
 // CreateEntitiesClient creates a dynatrace.EntitiesClient or returns an error.
 func (f defaultEntitiesClientFactory) CreateEntitiesClient(ctx context.Context) (*dynatrace.EntitiesClient, error) {
-	dynatraceConfig, err := f.configProvider.GetDynatraceConfig(initSyncEventAdapter{})
+	dynatraceConfig, err := f.configProvider.GetDynatraceConfig(ctx, initSyncEventAdapter{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to load Dynatrace config: %w", err)
 	}
@@ -170,7 +170,7 @@ func (s *ServiceSynchronizer) synchronizeServices(ctx context.Context) {
 			continue
 		}
 
-		if err := s.addServiceToKeptn(service); err != nil {
+		if err := s.addServiceToKeptn(ctx, service); err != nil {
 			log.WithError(err).WithFields(log.Fields{
 				"service":  service,
 				"entityId": entity.EntityID,
@@ -226,19 +226,19 @@ func doesServiceExist(services []string, serviceName string) bool {
 	return false
 }
 
-func (s *ServiceSynchronizer) addServiceToKeptn(serviceName string) error {
+func (s *ServiceSynchronizer) addServiceToKeptn(ctx context.Context, serviceName string) error {
 	err := s.servicesClient.CreateServiceInProject(synchronizedProject, serviceName)
 	if err != nil {
 		return fmt.Errorf("could not create service %s: %s", serviceName, err)
 	}
 
-	if err := s.createSLOResource(serviceName); err == nil {
+	if err := s.createSLOResource(ctx, serviceName); err == nil {
 		log.WithField("service", serviceName).Info("Uploaded slo.yaml for service")
 	} else {
 		log.WithError(err).WithField("service", serviceName).Info("Could not create SLO resource for service")
 	}
 
-	if err := s.createSLIResource(serviceName); err == nil {
+	if err := s.createSLIResource(ctx, serviceName); err == nil {
 		log.WithField("service", serviceName).Info("Uploaded sli.yaml for service")
 	} else {
 		log.WithError(err).WithField("service", serviceName).Info("Could not create SLI resource for service")
@@ -247,7 +247,7 @@ func (s *ServiceSynchronizer) addServiceToKeptn(serviceName string) error {
 	return nil
 }
 
-func (s *ServiceSynchronizer) createSLOResource(serviceName string) error {
+func (s *ServiceSynchronizer) createSLOResource(ctx context.Context, serviceName string) error {
 	defaultSLOs := &keptnlib.ServiceLevelObjectives{
 		SpecVersion: "1.0",
 		Filter:      nil,
@@ -281,7 +281,7 @@ func (s *ServiceSynchronizer) createSLOResource(serviceName string) error {
 		},
 	}
 
-	err := s.resourcesClient.UploadSLOs(synchronizedProject, synchronizedStage, serviceName, defaultSLOs)
+	err := s.resourcesClient.UploadSLOs(ctx, synchronizedProject, synchronizedStage, serviceName, defaultSLOs)
 	if err != nil {
 		return err
 	}
@@ -289,7 +289,7 @@ func (s *ServiceSynchronizer) createSLOResource(serviceName string) error {
 	return nil
 }
 
-func (s *ServiceSynchronizer) createSLIResource(serviceName string) error {
+func (s *ServiceSynchronizer) createSLIResource(ctx context.Context, serviceName string) error {
 	indicators := make(map[string]string)
 	indicators["throughput"] = fmt.Sprintf("metricSelector=builtin:service.requestCount.total:merge(\"dt.entity.service\"):sum&entitySelector=type(SERVICE),tag(keptn_managed),tag(keptn_service:%s)", serviceName)
 	indicators["error_rate"] = fmt.Sprintf("metricSelector=builtin:service.errors.total.rate:merge(\"dt.entity.service\"):avg&entitySelector=type(SERVICE),tag(keptn_managed),tag(keptn_service:%s)", serviceName)
@@ -302,7 +302,7 @@ func (s *ServiceSynchronizer) createSLIResource(serviceName string) error {
 		Indicators:  indicators,
 	}
 
-	err := s.resourcesClient.UploadSLIs(synchronizedProject, synchronizedStage, serviceName, defaultSLIs)
+	err := s.resourcesClient.UploadSLIs(ctx, synchronizedProject, synchronizedStage, serviceName, defaultSLIs)
 	if err != nil {
 		return err
 	}

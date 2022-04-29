@@ -1,6 +1,7 @@
 package keptn
 
 import (
+	"context"
 	"testing"
 
 	"github.com/keptn/go-utils/pkg/api/models"
@@ -13,22 +14,42 @@ type mockUniformClient struct {
 }
 
 func (c mockUniformClient) Ping(integrationID string) (*models.Integration, error) {
+	return c.PingWithContext(context.TODO(), integrationID)
+}
+
+func (c mockUniformClient) PingWithContext(ctx context.Context, integrationID string) (*models.Integration, error) {
 	panic("Ping should not be called on mockUniformClient")
 }
 
 func (c mockUniformClient) RegisterIntegration(integration models.Integration) (string, error) {
+	return c.RegisterIntegrationWithContext(context.TODO(), integration)
+}
+
+func (c mockUniformClient) RegisterIntegrationWithContext(ctx context.Context, integration models.Integration) (string, error) {
 	panic("RegisterIntegration should not be called on mockUniformClient")
 }
 
 func (c mockUniformClient) CreateSubscription(integrationID string, subscription models.EventSubscription) (string, error) {
+	return c.CreateSubscriptionWithContext(context.TODO(), integrationID, subscription)
+}
+
+func (c mockUniformClient) CreateSubscriptionWithContext(ctx context.Context, integrationID string, subscription models.EventSubscription) (string, error) {
 	panic("CreateSubscription should not be called on mockUniformClient")
 }
 
 func (c mockUniformClient) UnregisterIntegration(integrationID string) error {
+	return c.UnregisterIntegrationWithContext(context.TODO(), integrationID)
+}
+
+func (c mockUniformClient) UnregisterIntegrationWithContext(ctx context.Context, integrationID string) error {
 	panic("UnregisterIntegration should not be called on mockUniformClient")
 }
 
 func (c mockUniformClient) GetRegistrations() ([]*models.Integration, error) {
+	return c.GetRegistrationsWithContext(context.TODO())
+}
+
+func (c mockUniformClient) GetRegistrationsWithContext(ctx context.Context) ([]*models.Integration, error) {
 	return c.registrations, nil
 }
 

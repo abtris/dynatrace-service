@@ -60,7 +60,7 @@ func getEventHandler(ctx context.Context, event cloudevents.Event, clientFactory
 	}
 
 	dynatraceConfigGetter := config.NewDynatraceConfigGetter(keptn.NewConfigClient(clientFactory.CreateResourceClient()))
-	dynatraceConfig, err := dynatraceConfigGetter.GetDynatraceConfig(keptnEvent)
+	dynatraceConfig, err := dynatraceConfigGetter.GetDynatraceConfig(ctx, keptnEvent)
 	if err != nil {
 		return nil, fmt.Errorf("could not get configuration: %w", err)
 	}

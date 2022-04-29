@@ -132,7 +132,7 @@ func (eh *GetSLIEventHandler) getSLIResultsFromDynatraceDashboard(ctx context.Co
 
 	// let's write the SLI to the config repo
 	if queryResult.HasSLIs() {
-		err = eh.resourceClient.UploadSLIs(eh.event.GetProject(), eh.event.GetStage(), eh.event.GetService(), queryResult.SLIs())
+		err = eh.resourceClient.UploadSLIs(ctx, eh.event.GetProject(), eh.event.GetStage(), eh.event.GetService(), queryResult.SLIs())
 		if err != nil {
 			return nil, nil, dashboard.NewUploadFileError("SLI", err)
 		}
@@ -140,7 +140,7 @@ func (eh *GetSLIEventHandler) getSLIResultsFromDynatraceDashboard(ctx context.Co
 
 	// let's write the SLO to the config repo
 	if queryResult.HasSLOs() {
-		err = eh.resourceClient.UploadSLOs(eh.event.GetProject(), eh.event.GetStage(), eh.event.GetService(), queryResult.SLOs())
+		err = eh.resourceClient.UploadSLOs(ctx, eh.event.GetProject(), eh.event.GetStage(), eh.event.GetService(), queryResult.SLOs())
 		if err != nil {
 			return nil, nil, dashboard.NewUploadFileError("SLO", err)
 		}
@@ -181,7 +181,7 @@ func (eh *GetSLIEventHandler) getSLIResultsFromProblemContext(ctx context.Contex
 	sloString := fmt.Sprintf("sli=%s;pass=<=0;key=true", ProblemOpenSLI)
 	sloDefinition := common.ParsePassAndWarningWithoutDefaultsFrom(sloString)
 
-	errAddSlo := eh.addSLO(sloDefinition)
+	errAddSlo := eh.addSLO(ctx, sloDefinition)
 	if errAddSlo != nil {
 		// TODO 2021-08-10: should this be added to the error object for sendGetSLIFinishedEvent below?
 		log.WithError(errAddSlo).Error("problem while adding SLOs")
@@ -203,10 +203,10 @@ func (eh *GetSLIEventHandler) getSLIResultsFromProblemContext(ctx context.Contex
 }
 
 // addSLO adds an SLO Entry to the SLO.yaml
-func (eh GetSLIEventHandler) addSLO(newSLO *keptncommon.SLO) error {
+func (eh GetSLIEventHandler) addSLO(ctx context.Context, newSLO *keptncommon.SLO) error {
 
 	// first - lets load the SLO.yaml from the config repo
-	dashboardSLO, err := eh.resourceClient.GetSLOs(eh.event.GetProject(), eh.event.GetStage(), eh.event.GetService())
+	dashboardSLO, err := eh.resourceClient.GetSLOs(ctx, eh.event.GetProject(), eh.event.GetStage(), eh.event.GetService())
 	if err != nil {
 		var rnfErr *keptn.ResourceNotFoundError
 		if !errors.As(err, &rnfErr) {
@@ -236,7 +236,7 @@ func (eh GetSLIEventHandler) addSLO(newSLO *keptncommon.SLO) error {
 
 	// now - lets add our newSLO to the list
 	dashboardSLO.Objectives = append(dashboardSLO.Objectives, newSLO)
-	err = eh.resourceClient.UploadSLOs(eh.event.GetProject(), eh.event.GetStage(), eh.event.GetService(), dashboardSLO)
+	err = eh.resourceClient.UploadSLOs(ctx, eh.event.GetProject(), eh.event.GetStage(), eh.event.GetService(), dashboardSLO)
 	if err != nil {
 		return err
 	}

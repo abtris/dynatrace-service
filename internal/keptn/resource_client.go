@@ -1,6 +1,7 @@
 package keptn
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -13,19 +14,19 @@ import (
 // ResourceClientInterface defines the methods for interacting with resources of Keptn's configuration service.
 type ResourceClientInterface interface {
 	// GetResource tries to find the first instance of a given resource on service, stage or project level.
-	GetResource(project string, stage string, service string, resourceURI string) (string, error)
+	GetResource(ctx context.Context, project string, stage string, service string, resourceURI string) (string, error)
 
 	// GetProjectResource tries to retrieve a resource on project level.
-	GetProjectResource(project string, resourceURI string) (string, error)
+	GetProjectResource(ctx context.Context, project string, resourceURI string) (string, error)
 
 	// GetStageResource tries to retrieve a resource on stage level.
-	GetStageResource(project string, stage string, resourceURI string) (string, error)
+	GetStageResource(ctx context.Context, project string, stage string, resourceURI string) (string, error)
 
 	// GetServiceResource tries to retrieve a resource on service level.
-	GetServiceResource(project string, stage string, service string, resourceURI string) (string, error)
+	GetServiceResource(ctx context.Context, project string, stage string, service string, resourceURI string) (string, error)
 
 	// UploadResource tries to upload a resource.
-	UploadResource(contentToUpload []byte, remoteResourceURI string, project string, stage string, service string) error
+	UploadResource(ctx context.Context, contentToUpload []byte, remoteResourceURI string, project string, stage string, service string) error
 }
 
 // ResourceError represents an error for a resource that was not found.
@@ -103,10 +104,10 @@ func NewResourceClient(client api.ResourcesV1Interface) *ResourceClient {
 }
 
 // GetResource tries to find the first instance of a given resource on service, stage or project level.
-func (rc *ResourceClient) GetResource(project string, stage string, service string, resourceURI string) (string, error) {
+func (rc *ResourceClient) GetResource(ctx context.Context, project string, stage string, service string, resourceURI string) (string, error) {
 	var rnfErrorType *ResourceNotFoundError
 	if project != "" && stage != "" && service != "" {
-		keptnResourceContent, err := rc.GetServiceResource(project, stage, service, resourceURI)
+		keptnResourceContent, err := rc.GetServiceResource(ctx, project, stage, service, resourceURI)
 		if errors.As(err, &rnfErrorType) {
 			log.WithFields(
 				log.Fields{
@@ -128,7 +129,7 @@ func (rc *ResourceClient) GetResource(project string, stage string, service stri
 	}
 
 	if project != "" && stage != "" {
-		keptnResourceContent, err := rc.GetStageResource(project, stage, resourceURI)
+		keptnResourceContent, err := rc.GetStageResource(ctx, project, stage, resourceURI)
 		if errors.As(err, &rnfErrorType) {
 			log.WithFields(
 				log.Fields{
@@ -148,7 +149,7 @@ func (rc *ResourceClient) GetResource(project string, stage string, service stri
 	}
 
 	if project != "" {
-		keptnResourceContent, err := rc.GetProjectResource(project, resourceURI)
+		keptnResourceContent, err := rc.GetProjectResource(ctx, project, resourceURI)
 		if errors.As(err, &rnfErrorType) {
 			log.WithField("project", project).Debugf("%s not available for project", resourceURI)
 		} else if err != nil {
@@ -164,10 +165,10 @@ func (rc *ResourceClient) GetResource(project string, stage string, service stri
 }
 
 // GetServiceResource tries to retrieve a resource on service level.
-func (rc *ResourceClient) GetServiceResource(project string, stage string, service string, resourceURI string) (string, error) {
+func (rc *ResourceClient) GetServiceResource(ctx context.Context, project string, stage string, service string, resourceURI string) (string, error) {
 	return getResourceByFunc(
 		func() (*keptnmodels.Resource, error) {
-			return rc.client.GetServiceResource(project, stage, service, resourceURI)
+			return rc.client.GetServiceResourceWithContext(ctx, project, stage, service, resourceURI)
 		},
 		func() *ResourceNotFoundError {
 			return &ResourceNotFoundError{uri: resourceURI, project: project, stage: stage, service: service}
@@ -181,9 +182,11 @@ func (rc *ResourceClient) GetServiceResource(project string, stage string, servi
 }
 
 // GetStageResource tries to retrieve a resource on stage level.
-func (rc *ResourceClient) GetStageResource(project string, stage string, resourceURI string) (string, error) {
+func (rc *ResourceClient) GetStageResource(ctx context.Context, project string, stage string, resourceURI string) (string, error) {
 	return getResourceByFunc(
-		func() (*keptnmodels.Resource, error) { return rc.client.GetStageResource(project, stage, resourceURI) },
+		func() (*keptnmodels.Resource, error) {
+			return rc.client.GetStageResourceWithContext(ctx, project, stage, resourceURI)
+		},
 		func() *ResourceNotFoundError {
 			return &ResourceNotFoundError{uri: resourceURI, project: project, stage: stage}
 		},
@@ -196,9 +199,11 @@ func (rc *ResourceClient) GetStageResource(project string, stage string, resourc
 }
 
 // GetProjectResource tries to retrieve a resource on project level.
-func (rc *ResourceClient) GetProjectResource(project string, resourceURI string) (string, error) {
+func (rc *ResourceClient) GetProjectResource(ctx context.Context, project string, resourceURI string) (string, error) {
 	return getResourceByFunc(
-		func() (*keptnmodels.Resource, error) { return rc.client.GetProjectResource(project, resourceURI) },
+		func() (*keptnmodels.Resource, error) {
+			return rc.client.GetProjectResourceWithContext(ctx, project, resourceURI)
+		},
 		func() *ResourceNotFoundError { return &ResourceNotFoundError{uri: resourceURI, project: project} },
 		func(msg string) *ResourceRetrievalFailedError {
 			return &ResourceRetrievalFailedError{ResourceError{uri: resourceURI, project: project}, msg}
@@ -227,9 +232,9 @@ func getResourceByFunc(
 }
 
 // UploadResource tries to upload a resource.
-func (rc *ResourceClient) UploadResource(contentToUpload []byte, remoteResourceURI string, project string, stage string, service string) error {
+func (rc *ResourceClient) UploadResource(ctx context.Context, contentToUpload []byte, remoteResourceURI string, project string, stage string, service string) error {
 	resources := []*keptnmodels.Resource{{ResourceContent: string(contentToUpload), ResourceURI: &remoteResourceURI}}
-	_, err := rc.client.CreateResources(project, stage, service, resources)
+	_, err := rc.client.CreateResourcesWithContext(ctx, project, stage, service, resources)
 	if err != nil {
 		return &ResourceUploadFailedError{
 			ResourceError{

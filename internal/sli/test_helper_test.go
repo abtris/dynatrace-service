@@ -232,17 +232,17 @@ type resourceClientMock struct {
 	t *testing.T
 }
 
-func (m *resourceClientMock) GetSLOs(project string, stage string, service string) (*keptnapi.ServiceLevelObjectives, error) {
+func (m *resourceClientMock) GetSLOs(ctx context.Context, project string, stage string, service string) (*keptnapi.ServiceLevelObjectives, error) {
 	m.t.Fatalf("GetSLOs() should not be needed in this mock!")
 	return nil, nil
 }
 
-func (m *resourceClientMock) UploadSLIs(project string, stage string, service string, slis *dynatrace.SLI) error {
+func (m *resourceClientMock) UploadSLIs(ctx context.Context, project string, stage string, service string, slis *dynatrace.SLI) error {
 	m.t.Fatalf("UploadSLIs() should not be needed in this mock!")
 	return nil
 }
 
-func (m *resourceClientMock) UploadSLOs(project string, stage string, service string, slos *keptnapi.ServiceLevelObjectives) error {
+func (m *resourceClientMock) UploadSLOs(ctx context.Context, project string, stage string, service string, slos *keptnapi.ServiceLevelObjectives) error {
 	m.t.Fatalf("UploadSLOs() should not be needed in this mock!")
 	return nil
 }

@@ -72,12 +72,12 @@ type mockSLIAndSLOResourceWriter struct {
 	uploadedSLOs []uploadedSLOs
 }
 
-func (w *mockSLIAndSLOResourceWriter) UploadSLIs(project string, stage string, service string, slis *dynatrace.SLI) error {
+func (w *mockSLIAndSLOResourceWriter) UploadSLIs(ctx context.Context, project string, stage string, service string, slis *dynatrace.SLI) error {
 	w.uploadedSLIs = append(w.uploadedSLIs, uploadedSLIs{project: project, stage: stage, service: service, slis: slis})
 	return nil
 }
 
-func (w *mockSLIAndSLOResourceWriter) UploadSLOs(project string, stage string, service string, slos *keptnlib.ServiceLevelObjectives) error {
+func (w *mockSLIAndSLOResourceWriter) UploadSLOs(ctx context.Context, project string, stage string, service string, slos *keptnlib.ServiceLevelObjectives) error {
 	w.uploadedSLOs = append(w.uploadedSLOs, uploadedSLOs{project: project, stage: stage, service: service, slos: slos})
 	return nil
 }

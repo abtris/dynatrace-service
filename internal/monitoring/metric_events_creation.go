@@ -43,7 +43,7 @@ func NewMetricEventCreation(dynatraceClient dynatrace.ClientInterface, keptnClie
 // Create creates new metric events if SLOs are specified.
 func (mec MetricEventCreation) Create(ctx context.Context, project string, stage string, service string) []ConfigResult {
 	log.Info("Creating custom metric events for project SLIs")
-	slos, err := mec.sloReader.GetSLOs(project, stage, service)
+	slos, err := mec.sloReader.GetSLOs(ctx, project, stage, service)
 	if err != nil {
 		log.WithError(err).WithFields(
 			log.Fields{
